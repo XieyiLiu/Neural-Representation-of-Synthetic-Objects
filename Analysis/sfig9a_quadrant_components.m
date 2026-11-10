@@ -1,8 +1,5 @@
 % Supplementary Fig. 9a: MATLAB components
-% Source_Data/sfig9a_quadrant_components.mat contains all 100 original real-object photographs.
-% This script displays 16 of them, four per quadrant. The manuscript panel shows substitute
-% photographs. Credits for those substitutes are listed in Supplementary Table 1.
-% Define object-space quadrants and display the selected example images.
+% Plot the mean reference directions and object coordinates, and assign objects to quadrants.
 package_dir = fileparts(fileparts(mfilename('fullpath')));
 addpath(fullfile(package_dir, 'function'));
 load(fullfile(package_dir, 'Source_Data', 'sfig9a_quadrant_components.mat'));
@@ -64,17 +61,4 @@ for tt = 1:2
         end
     end
     eval(['quadrantindex_' type ' = quadrantindex;'])
-end
-for q=1:4
-assert(all(quadrantindex_real(example_ids_real(q,:),1)==q));
-assert(all(quadrantindex_fake(example_ids_fake(q,:),1)==q));
-end
-figure;
-for i = 1:4
-    subplot(2,4,2*i-1)
-    idd = find(quadrantindex_real(:,1) == i);
-    imshow(showimg_mat(imall_100,example_ids_real(i,:),1))
-    subplot(2,4,2*i)
-    idd = find(quadrantindex_fake(:,1) == i);
-    imshow(showimg_mat(img100_fake,example_ids_fake(i,:),0))
 end
