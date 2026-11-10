@@ -21,6 +21,9 @@ for nn = 1:nSubj
 end
 
 %% Selectivity correlations
+participant_numbers = cellfun(@(id) sscanf(id,'S%d'), name);
+[~, panel_order] = sort(participant_numbers);
+[~, panel_positions] = sort(panel_order);
 figure;
 set(gcf,'Position',[100,120,1000,460])
 set(gcf, 'Renderer', 'painters');
@@ -72,7 +75,7 @@ colordeep = slanCM('Purples');
 colordeep(1,:) = [1,1,1];
 
 for nn = 1:nSubj
-    subplot(1,2,nn)
+    subplot(1,2,panel_positions(nn))
 
     x = r_fake_all{nn};
     y = r_pv_all{nn};

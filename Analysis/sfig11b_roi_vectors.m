@@ -30,9 +30,11 @@ for ss=1:8
  end
 end
 figure;set(gcf,'Position',[100 100 1200 600],'Renderer','painters');
+panel_numbers = cellfun(@(id) sscanf(id,'S%d'), subject_ids);
+assert(isequal(sort(panel_numbers(:))',1:8), 'Expected S1 through S8.');
 for ss = 1:length(subjall)
     subj = subjall{ss};
-    pax = subplot(2,4,ss, polaraxes);
+    pax = subplot(2,4,panel_numbers(ss), polaraxes);
     hold(pax, 'on');
     title(pax, subject_ids{ss}, 'FontName','Tahoma','FontSize',10,'FontWeight','bold');
     thetaticks(pax, 0:90:360);
