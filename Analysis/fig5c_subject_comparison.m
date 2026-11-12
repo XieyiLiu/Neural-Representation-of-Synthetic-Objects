@@ -22,6 +22,10 @@ tt2 = cell2mat(p1all_median');
 median_mean(3,:) = mean(tt2);
 median_std(3,:) = std(tt2)./sqrt(8);
 
+fprintf(['Across-subject means of within-subject median z-scored R (n = %d): ' ...
+    'Task 1 = %.2f, Task 2 = %.2f, passive viewing = %.2f.\n'], ...
+    size(tt1,1), median_mean(2,2), median_mean(3,2), median_mean(1,2));
+
 [h,p_task1_pv,ci_task1_pv,stats_task1_pv] = ttest(tt1(:,2),ttpv(:,2),'Tail','both');
 [h,p_task2_pv,ci_task2_pv,stats_task2_pv] = ttest(tt2(:,2),ttpv(:,2),'Tail','both');
 [h,p_task1_task2,ci_task1_task2,stats_task1_task2] = ttest(tt1(:,2),tt2(:,2),'Tail','both');
