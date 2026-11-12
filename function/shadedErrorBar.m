@@ -8,11 +8,8 @@ narginchk(3,inf)
 params = inputParser;
 params.CaseSensitive = false;
 params.addParameter('lineProps', '-k', @(x) ischar(x) | iscell(x));
-if (sum( size(ver('MATLAB'))) > 0  )
-  params.addParameter('transparent', true, @(x) islogical(x) || x==0 || x==1);
-elseif (sum( size(ver('Octave'))) > 0  )
-  params.addParameter('transparent', false, @(x) islogical(x) || x==0 || x==1);
-end
+isOctave = exist('OCTAVE_VERSION','builtin') ~= 0;
+params.addParameter('transparent', ~isOctave, @(x) islogical(x) || x==0 || x==1);
 params.addParameter('patchSaturation', 0.2, @(x) isnumeric(x) && x>=0 && x<=1);
 
 params.parse(varargin{:});
@@ -34,7 +31,7 @@ end
 
 if isempty(x)
     x=1:length(y);
-elseif sum( size(ver('MATLAB'))) > 0
+elseif ~isOctave
     x=x(:).';
 end
 
@@ -47,19 +44,18 @@ else
     if f==2, errBar=errBar'; end
 end
 
-x_size = size(x);
-
-if (length(x) ~= length(errBar) && sum( size(ver('MATLAB'))) > 0 )
-    error('length(x) must equal length(errBar)')
-elseif( ( length(x) ~= length(errBar) && checkOctave_datestr(x) == false ) ...
-            && sum( size(ver('Octave'))) > 0  )
-    error('length(x) must equal length(errBar) or x must have valid datestr')
+if length(x) ~= length(errBar)
+    if ~isOctave
+        error('length(x) must equal length(errBar)')
+    elseif ~checkOctave_datestr(x)
+        error('length(x) must equal length(errBar) or x must have valid datestr')
+    end
 end
 
 initialHoldStatus=ishold;
 if ~initialHoldStatus, hold on,  end
 
-H = makePlot(x,y,errBar,lineProps,transparent,patchSaturation);
+H = makePlot(x,y,errBar,lineProps,transparent,patchSaturation,isOctave);
 
 if ~initialHoldStatus, hold off, end
 
@@ -67,20 +63,14 @@ if nargout==1
     varargout{1}=H;
 end
 
-function H = makePlot(x,y,errBar,lineProps,transparent,patchSaturation)
+function H = makePlot(x,y,errBar,lineProps,transparent,patchSaturation,isOctave)
 
     %% Error-band plot
 
-    if (sum( size(ver('MATLAB'))) > 0  )
-      hostName = 'MATLAB';
-    elseif (sum(size(ver('Octave'))) > 0)
-      hostName = 'Octave';
-    end
-
-    if hostName == 'MATLAB'
+    if ~isOctave
       H.mainLine=plot(x,y,lineProps{:});
 
-    elseif hostName == 'Octave'
+    else
       boolxDatestr = checkOctave_datestr(x);
       if boolxDatestr
         x = datenum(x);
@@ -114,7 +104,7 @@ function H = makePlot(x,y,errBar,lineProps,transparent,patchSaturation)
     xP(isnan(yP))=[];
     yP(isnan(yP))=[];
 
-    if isdatetime(x) && strcmp(hostName,'MATLAB')
+    if ~isOctave && isdatetime(x)
       H.patch=patch(datenum(xP),yP,1);
     else
       H.patch=patch(xP,yP,1);
@@ -133,11 +123,11 @@ function H = makePlot(x,y,errBar,lineProps,transparent,patchSaturation)
       'HandleVisibility','off', ...
       'Tag', 'shadedErrorBar_edge')
 
-    if hostName == 'MATLAB'
+    if ~isOctave
       if strcmp(get(gca,'YAxisLocation'),'left')
         uistack(H.mainLine,'top')
       end
-    elseif hostName == 'Octave'
+    else
 
       H = struct('mainLine', H.mainLine, ...
       'patch', H.patch, ...

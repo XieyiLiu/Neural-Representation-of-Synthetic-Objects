@@ -30,11 +30,13 @@ pall = mean(psth_smooth,3)';
 pall_errbar = ...
     (std(psth_smooth,0,3)./sqrt(size(psth_smooth,3)))';
 
-h = figure('Name',ttl,'NumberTitle','off');
-whitebg(h,'white');
+h = figure('Name',ttl,'NumberTitle','off','Color','white');
+if isprop(h,'Theme')
+    h.Theme = 'light';
+end
 set(h,'Position',[560,423,646,482])
 
-axs = axes();
+axs = axes('Parent',h,'Color','white');
 area(axs,[0 200],[2 2], ...
     'FaceColor',[0.9 0.9 0.9], ...
     'EdgeColor','none', ...
