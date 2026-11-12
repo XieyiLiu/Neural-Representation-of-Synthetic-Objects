@@ -19,17 +19,23 @@ rng(407,'twister');
     title('VTC');
     set(gca,'FontName','Times New Roman','FontSize',12,'FontWeight','bold')
 
-%% Same-object correlations
-mean_same_object_r=[mean(mean(r_t1t2,1)),mean(mean(r_t1pv,1)),mean(mean(r_t2pv,1))]
-    [h,p,ci,stats] = ttest(mean(r_t1t2,1),mean(r_t1pv,1),'Tail','both');
-    p
-    stats
-    [h,p,ci,stats] = ttest(mean(r_t1t2,1),mean(r_t2pv,1),'Tail','both');
-    p
-    stats
-    [h,p,ci,stats] = ttest(mean(r_t2pv,1),mean(r_t1pv,1),'Tail','both');
-    p
-    stats
+%% Same-stimulus correlations
+% Average over stimuli within each participant before comparing condition pairs.
+r_task1_task2 = mean(r_t1t2,1);
+r_task1_pv = mean(r_t1pv,1);
+r_task2_pv = mean(r_t2pv,1);
+mean_same_object_r = [mean(r_task1_task2), mean(r_task1_pv), mean(r_task2_pv)];
+
+fprintf('\nFig. 5d | Same-stimulus correlations across conditions (PV = passive viewing)\n');
+fprintf('Group mean Pearson r (%d stimuli per participant, n = %d participants)\n', ...
+    size(r_t1t2,1), size(r_t1t2,2));
+fprintf('  Task 1 / Task 2 = %.2f, Task 1 / PV = %.2f, Task 2 / PV = %.2f\n', ...
+    mean_same_object_r);
+fprintf('Two-sided paired t-tests across participants\n');
+report_paired_ttest('r(Task 1, Task 2) vs r(Task 1, PV)', r_task1_task2, r_task1_pv);
+report_paired_ttest('r(Task 1, Task 2) vs r(Task 2, PV)', r_task1_task2, r_task2_pv);
+fprintf('Additional comparison\n');
+[h,p,ci,stats] = report_paired_ttest('r(Task 2, PV) vs r(Task 1, PV)', r_task2_pv, r_task1_pv);
 
 %% Fig. 5e: three-dimensional MDS
 Yplot = [Y(:,1), Y(:,2), -Y(:,3)];
@@ -42,8 +48,8 @@ Yplot = [Y(:,1), Y(:,2), -Y(:,3)];
 
     predictedLabel = predict(svmModel, Yplot);
     apparentAccuracy = mean(predictedLabel == classLabel);
-    fprintf('%s Task-vs-PV linear-plane apparent accuracy: %.4f\n', ...
-        'VTC', apparentAccuracy);
+    fprintf('\nFig. 5e | VTC 3-D MDS\n');
+    fprintf('  Task-vs-PV linear-plane apparent accuracy = %.4f\n', apparentAccuracy);
 
     lowerLimit = min(Yplot,[],1);
     upperLimit = max(Yplot,[],1);
@@ -90,7 +96,6 @@ Y1=mdscale(squareform(1-rb_task1),2);Y2=mdscale(squareform(1-rb_task2),2);Y3=mds
     xlabel('MDS dim1');ylabel('MDS dim2')
     title('VTC (Task 1)');
     set(gca,'FontName','Tahoma','FontSize',12,'FontWeight','bold')
-    mean(pdist(Y1,'euclidean'))
 
     subplot(1,3,2)
     set(gcf,'Position',[10,10,700,550]);
@@ -102,7 +107,6 @@ Y1=mdscale(squareform(1-rb_task1),2);Y2=mdscale(squareform(1-rb_task2),2);Y3=mds
     xlabel('MDS dim1');ylabel('MDS dim2')
     title('VTC (Task 2)');
     set(gca,'FontName','Tahoma','FontSize',12,'FontWeight','bold')
-    mean(pdist(Y2,'euclidean'))
 
     subplot(1,3,3)
     set(gcf,'Position',[10,10,700,550]);
@@ -114,12 +118,24 @@ Y1=mdscale(squareform(1-rb_task1),2);Y2=mdscale(squareform(1-rb_task2),2);Y3=mds
     xlabel('MDS dim1');ylabel('MDS dim2')
     title('VTC (PV)');
     set(gca,'FontName','Tahoma','FontSize',12,'FontWeight','bold')
-    mean(pdist(Y3,'euclidean'))
-mean(dtall')
+% Rows of dtall correspond to Task 1, Task 2 and PV; columns are participants.
+mean_subject_distance = mean(dtall,2);
+fprintf('\nFig. 5f | Mean pairwise Euclidean distances in 2-D MDS\n');
+fprintf('Group means of participant-level distances (n = %d participants)\n', size(dtall,2));
+fprintf('  Task 1 = %.2f, Task 2 = %.2f, PV = %.2f\n', mean_subject_distance);
+fprintf('Two-sided paired t-tests across participants\n');
+report_paired_ttest('Task 1 vs Task 2', dtall(1,:), dtall(2,:));
+report_paired_ttest('Task 1 vs PV', dtall(1,:), dtall(3,:));
+[~,p,~,stats] = report_paired_ttest('Task 2 vs PV', dtall(2,:), dtall(3,:));
 
-[~,p,~,stats] = ttest(dtall(1,:),dtall(2,:),'Tail','both')
-[~,p,~,stats] = ttest(dtall(1,:),dtall(3,:),'Tail','both')
-[~,p,~,stats] = ttest(dtall(3,:),dtall(2,:),'Tail','both')
+fprintf('Descriptive distances in the three displayed group embeddings\n');
+fprintf('  Task 1 = %.4f, Task 2 = %.4f, PV = %.4f\n', ...
+    mean(pdist(Y1,'euclidean')), mean(pdist(Y2,'euclidean')), mean(pdist(Y3,'euclidean')));
+
+function [h,p,ci,stats] = report_paired_ttest(label, first, second)
+    [h,p,ci,stats] = ttest(first, second, 'Tail','both');
+    fprintf('  %-36s  t(%d) = %.2f, p = %.3g\n', label, stats.df, stats.tstat, p);
+end
 
 function hPlane = plot_linear_svm_plane(w, b, plotLimits)
 
